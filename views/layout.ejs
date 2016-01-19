@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <title>Game of Life</title>
+      <!-- styles -->
+      <link href="public/main.css" rel="stylesheet">
+      <!-- javascript -->
+      <script src="public/gameoflife.js"></script>
+
+   </head>
+
+   <body>
+      <div class="title">
+         <%= title %>
+      </div>
+
+      <canvas id="canvas" width="800px" height="800px"></canvas>
+
+      <input type="button" id="startStopButton" value="Start"/>
+      <input type="range" id="runSpeed" value="5" min="5" max="500" step="25" oninput="changeSpeed(this.value)" onchange="changeSpeed(this.value)">
+      <input type="button" id="randomiseButton" value="Randomise"/>
+      <input type="button" id="clearButton" value="Clear"/>
+
+
+   </body>
+</html>
