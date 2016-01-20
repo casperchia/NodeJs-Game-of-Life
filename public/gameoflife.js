@@ -1,16 +1,17 @@
 var DEAD = 0;
 var ALIVE = 1;
 var ALIVE_FROM_DEAD = 2;
-var CELL_SIZE = 8;
+var MAX_CANVAS_SIZE = 800;
+var CELL_SIZE = 10;
 var CELL_DRAW_SIZE = CELL_SIZE - 1;
-var GRID_SIZE = 100;
-var CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
+var GRID_SIZE = Math.floor(MAX_CANVAS_SIZE / CELL_SIZE);
+var CANVAS_SIZE = CELL_SIZE * GRID_SIZE;
 
 var timer = false;
 var myBoard;
 var canvas;
 var myCanvas;
-var speed = 20;
+var speed = 30;
 
 function startGame(){
    console.log("Game started!");
@@ -35,8 +36,8 @@ function randomiseGame(){
    console.log("Randomising board...");
    for(var x = 0; x < GRID_SIZE; x++){
       for(var y = 0; y < GRID_SIZE; y++){
-         if(Math.random() > 0.8){
-            myBoard.grid[y][x] = ALIVE;
+         if(Math.random() > 0.90){
+            myBoard.grid[y][x] = Math.random() * 1000;
          }
       }
    }
@@ -51,12 +52,20 @@ function clearGame(){
 }
 
 function changeSpeed(val){
-   console.log(val);
-   speed = val;
+   speed = parseInt(val);
+   console.log(speed);
    if(timer){
       clearInterval(timer);
       timer = setInterval(nextBoard, speed);
    }
+}
+
+function changeCellSize(val){
+   CELL_SIZE = parseInt(val);
+   CELL_DRAW_SIZE = CELL_SIZE - 1;
+   GRID_SIZE = Math.floor(MAX_CANVAS_SIZE / CELL_SIZE);
+   CANVAS_SIZE = CELL_SIZE * GRID_SIZE;
+   initialise();
 }
 
 function nextBoard(){
@@ -74,14 +83,13 @@ function nextBoard(){
          }
       }
    }
-   console.log(newBoard);
    myBoard = newBoard;
    var line = "";
    for(var x = 0; x < GRID_SIZE; x++){
       for(var y = 0; y < GRID_SIZE; y++){
          line = line + myBoard.grid[y][x];
       }
-      console.log(line);
+      // console.log(line);
       line = "";
    }
    myCanvas.updateCanvas();
@@ -182,7 +190,8 @@ function drawingCanvas(canvas){
    this.canvas = canvas;
    var c = this.canvas.getContext("2d");
    this.actionStarted = false;
-   var prevX, prevY;
+   var prevX = null;
+   var prevY = null;
    var tempLifeLength = null;
 
    this.drawBox = function(){
@@ -283,19 +292,29 @@ window.onload = function(){
    document.getElementById('startStopButton').addEventListener('click', startGame);
    document.getElementById('randomiseButton').addEventListener('click', randomiseGame);
    document.getElementById('clearButton').addEventListener('click', clearGame);
+   canvas = document.getElementById("canvas");
 
+   initialise();
+   canvas.addEventListener("mousedown", myCanvas.mousedown);
+   canvas.addEventListener("mousemove", myCanvas.mousemove);
+   canvas.addEventListener("mouseup", myCanvas.mouseup);
+}
+
+function initialise(){
    myBoard = new board();
    myBoard.init();
 
-   canvas = document.getElementById("canvas")
    canvas.setAttribute('width', CANVAS_SIZE);
    canvas.setAttribute('height', CANVAS_SIZE);
 
    myCanvas = new drawingCanvas(canvas);
    myCanvas.drawBox();
-   myCanvas.canvas.addEventListener("mousedown", myCanvas.mousedown);
-   myCanvas.canvas.addEventListener("mousemove", myCanvas.mousemove);
-   myCanvas.canvas.addEventListener("mouseup", myCanvas.mouseup);
+   document.getElementById('cellSize').innerHTML = "Cell size: " + CELL_SIZE;
 }
 
+function isInt(value) {
+  return !isNaN(value) &&
+         parseInt(Number(value)) == value &&
+         !isNaN(parseInt(value, 10));
+}
 console.log = function(){}
