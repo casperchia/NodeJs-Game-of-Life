@@ -1,6 +1,7 @@
 var DEAD = 0;
 var ALIVE = 1;
 var ALIVE_FROM_DEAD = 2;
+var MUTATION_SPEED = 2;
 var MAX_CANVAS_SIZE = 800;
 var CELL_SIZE = 10;
 var CELL_DRAW_SIZE = CELL_SIZE - 1;
@@ -79,7 +80,7 @@ function nextBoard(){
             newBoard.setCellWith(x, y, myBoard.grid[x][y]);
          // Combines the colours of its parents
          }else if(doa == ALIVE_FROM_DEAD){
-            newBoard.setCellWith(x, y, myBoard.getNeighbourLifeLength(x, y) + 5);
+            newBoard.setCellWith(x, y, myBoard.getNeighbourLifeLength(x, y) + MUTATION_SPEED);
          }
       }
    }
@@ -165,6 +166,9 @@ function board(){
                if(this.grid[x + i][y + j] >= ALIVE){
                   neighbours++;
                   totalLifeLength += this.grid[x + i][y + j];
+                  if(neighbours == 3){
+                     break;
+                  }
                }
             }
          }
