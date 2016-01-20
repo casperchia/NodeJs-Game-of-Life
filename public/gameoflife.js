@@ -1,5 +1,6 @@
 var DEAD = 0;
 var ALIVE = 1;
+var ALIVE_FROM_DEAD = 2;
 var CELL_SIZE = 8;
 var CELL_DRAW_SIZE = CELL_SIZE - 1;
 var GRID_SIZE = 100;
@@ -65,8 +66,11 @@ function nextBoard(){
    for(var x = 0; x < GRID_SIZE; x++){
       for(var y = 0; y < GRID_SIZE; y++){
          doa = myBoard.deadOrAlive(x,y);
-         if(doa >= ALIVE){
+         if(doa == ALIVE){
             newBoard.setCellWith(x, y, myBoard.grid[x][y]);
+         // Combines the colours of its parents
+         }else if(doa == ALIVE_FROM_DEAD){
+            newBoard.setCellWith(x, y, myBoard.getNeighbourLifeLength(x, y) + 5);
          }
       }
    }
@@ -106,7 +110,7 @@ function board(){
 
    this.setCellWith = function(x, y, val){
       if(val < 0) val = 0;
-      this.grid[x][y] = val + 1;
+      this.grid[x][y] = val;
    }
 
    this.clearCell = function(x, y){
@@ -140,13 +144,34 @@ function board(){
       return count;
    }
 
+   this.getNeighbourLifeLength = function(x, y){
+      var totalLifeLength = 0;
+      var neighbours = 0;
+      var x2, y2;
+      for(var i = -1; i <= 1; i++){
+         for(var j = -1; j <= 1; j++){
+            x2 = x + i;
+            y2 = y + j;
+            // console.log(x2 + ":" + y2);
+            if(x2 >= 0 && x2 < GRID_SIZE && y2 >= 0 && y2 < GRID_SIZE && !(x2 == x && y2 == y)){
+               if(this.grid[x + i][y + j] >= ALIVE){
+                  neighbours++;
+                  totalLifeLength += this.grid[x + i][y + j];
+               }
+            }
+         }
+      }
+      return totalLifeLength / neighbours;
+   }
+
+
    this.deadOrAlive = function(x, y){
       var neighbours = this.getNeighbourCount(x, y);
       if(this.grid[x][y] >= ALIVE){
          if(neighbours == 2 || neighbours == 3) return ALIVE;
          return DEAD;
       }else{
-         if(neighbours == 3) return ALIVE;
+         if(neighbours == 3) return ALIVE_FROM_DEAD;
          return DEAD;
       }
    }
@@ -156,6 +181,9 @@ function board(){
 function drawingCanvas(canvas){
    this.canvas = canvas;
    var c = this.canvas.getContext("2d");
+   this.actionStarted = false;
+   var prevX, prevY;
+   var tempLifeLength = null;
 
    this.drawBox = function(){
       for (var x = 0; x < CANVAS_SIZE + 1; x += CELL_SIZE) {
@@ -172,25 +200,44 @@ function drawingCanvas(canvas){
       c.stroke();
    }
 
-   this.handleClick = function(e) {
-      var x = (Math.floor(e.offsetX/CELL_SIZE));
-      var y = (Math.floor(e.offsetY/CELL_SIZE));
-      // console.log(e.offsetX + ":" + e.offsetY);
-      // console.log(x + ":" + y + " = " + myBoard.grid[x][y]);
-      if(myBoard.grid[x][y] >= ALIVE){
-         c.fillStyle = "white";
-         myBoard.clearCell(x, y);
-      }else{
-         c.fillStyle = "black";
-         myBoard.setCell(x, y);
-      }
-      // console.log(myBoard.grid[x][y]);
+   this.mousedown = function(e) {
+      this.actionStarted = true;
+      tempLifeLength = Math.random()*1000;
+   }
 
-      var xc = x * CELL_SIZE;
-      var yc = y * CELL_SIZE;
-      // +1 for leave 1px space for the grid
-      c.fillRect(xc + 1, yc + 1, CELL_DRAW_SIZE, CELL_DRAW_SIZE);
-      // console.log("neighbours: " + myBoard.getNeighbourCount(x, y));
+   this.mousemove = function(e) {
+      if(this.actionStarted){
+         var x = (Math.floor(e.offsetX/CELL_SIZE));
+         var y = (Math.floor(e.offsetY/CELL_SIZE));
+
+         if(!(x == prevX && y == prevY)){
+            if(myBoard.grid[x][y] >= ALIVE){
+               c.fillStyle = "white";
+               myBoard.clearCell(x, y);
+            }else{
+               c.fillStyle = getColour(tempLifeLength, 100);
+               myBoard.setCellWith(x, y, tempLifeLength);
+            }
+
+            var xc = x * CELL_SIZE;
+            var yc = y * CELL_SIZE;
+            // +1 for leave 1px space for the grid
+            c.fillRect(xc + 1, yc + 1, CELL_DRAW_SIZE, CELL_DRAW_SIZE);
+
+         }
+         this.actionStarted = true;
+         prevX = x;
+         prevY = y;
+      }
+   }
+
+   this.mouseup = function(e) {
+      if(this.actionStarted){
+         this.actionStarted = false;
+         tempLifeLength = null;
+         prevX = null;
+         prevY = null;
+      }
    }
 
    this.updateCanvas = function(){
@@ -215,12 +262,11 @@ function getColour(timeAlive, phase){
    if (phase == undefined) phase = 0;
    center = 255 * 0.5;
    width = 255 * 0.5;
-   frequency = Math.PI*.2/10;
+   frequency = Math.PI*0.005;
    var i = timeAlive;
    red   = Math.sin(frequency*i+2+phase) * width + center;
    green = Math.sin(frequency*i+0+phase) * width + center;
    blue  = Math.sin(frequency*i+4+phase) * width + center;
-
    return RGB2Color(red, green, blue);
 }
 
@@ -231,7 +277,7 @@ function RGB2Color(r,g,b){
 function byte2Hex(n){
     var nybHexString = "0123456789ABCDEF";
     return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
-  }
+}
 
 window.onload = function(){
    document.getElementById('startStopButton').addEventListener('click', startGame);
@@ -240,13 +286,16 @@ window.onload = function(){
 
    myBoard = new board();
    myBoard.init();
- 
+
    canvas = document.getElementById("canvas")
    canvas.setAttribute('width', CANVAS_SIZE);
    canvas.setAttribute('height', CANVAS_SIZE);
+
    myCanvas = new drawingCanvas(canvas);
    myCanvas.drawBox();
-   myCanvas.canvas.addEventListener("click", myCanvas.handleClick);
+   myCanvas.canvas.addEventListener("mousedown", myCanvas.mousedown);
+   myCanvas.canvas.addEventListener("mousemove", myCanvas.mousemove);
+   myCanvas.canvas.addEventListener("mouseup", myCanvas.mouseup);
 }
 
 console.log = function(){}
