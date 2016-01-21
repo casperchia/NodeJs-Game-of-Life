@@ -13,6 +13,7 @@ var myBoard;
 var canvas;
 var myCanvas;
 var speed = 30;
+var generations;
 
 function startGame(){
    console.log("Game started!");
@@ -49,6 +50,7 @@ function clearGame(){
    console.log("Clearing board...");
    myBoard = new board();
    myBoard.init();
+   generations = 0;
    myCanvas.updateCanvas();
 }
 
@@ -59,6 +61,7 @@ function changeSpeed(val){
       clearInterval(timer);
       timer = setInterval(nextBoard, speed);
    }
+   document.getElementById('speed').innerHTML = "Speed: " + speed + "ms";
 }
 
 function changeCellSize(val){
@@ -93,6 +96,7 @@ function nextBoard(){
       // console.log(line);
       line = "";
    }
+   generations++;
    myCanvas.updateCanvas();
 }
 
@@ -197,6 +201,7 @@ function drawingCanvas(canvas){
    var prevX = null;
    var prevY = null;
    var tempLifeLength = null;
+   var mouseMoved;
 
    this.drawBox = function(){
       for (var x = 0; x < CANVAS_SIZE + 1; x += CELL_SIZE) {
@@ -216,13 +221,14 @@ function drawingCanvas(canvas){
    this.mousedown = function(e) {
       this.actionStarted = true;
       tempLifeLength = Math.random()*1000;
+      mouseMoved = false;
    }
 
    this.mousemove = function(e) {
+      var x = (Math.floor(e.offsetX/CELL_SIZE));
+      var y = (Math.floor(e.offsetY/CELL_SIZE));
       if(this.actionStarted){
-         var x = (Math.floor(e.offsetX/CELL_SIZE));
-         var y = (Math.floor(e.offsetY/CELL_SIZE));
-
+         mouseMoved = true;
          if(!(x == prevX && y == prevY)){
             if(myBoard.grid[x][y] >= ALIVE){
                c.fillStyle = "white";
@@ -242,10 +248,28 @@ function drawingCanvas(canvas){
          prevX = x;
          prevY = y;
       }
+      document.getElementById('mouseCoordinates').innerHTML = "X: " + x + "\nY: " + y;
+
    }
 
    this.mouseup = function(e) {
+
       if(this.actionStarted){
+         if(mouseMoved == false){
+            var x = (Math.floor(e.offsetX/CELL_SIZE));
+            var y = (Math.floor(e.offsetY/CELL_SIZE));
+            if(myBoard.grid[x][y] >= ALIVE){
+               c.fillStyle = "white";
+               myBoard.clearCell(x, y);
+            }else{
+               c.fillStyle = getColour(tempLifeLength, 100);
+               myBoard.setCellWith(x, y, tempLifeLength);
+            }
+            var xc = x * CELL_SIZE;
+            var yc = y * CELL_SIZE;
+            c.fillRect(xc + 1, yc + 1, CELL_DRAW_SIZE, CELL_DRAW_SIZE);
+            mouseMoved = true;
+         }
          this.actionStarted = false;
          tempLifeLength = null;
          prevX = null;
@@ -268,6 +292,7 @@ function drawingCanvas(canvas){
             c.fillRect(xc + 1, yc + 1, CELL_DRAW_SIZE, CELL_DRAW_SIZE);
          }
       }
+      document.getElementById('generations').innerHTML = "Generations: " + generations;
    }
 }
 
@@ -292,10 +317,17 @@ function byte2Hex(n){
     return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
 }
 
+
+
 window.onload = function(){
+   // Prevents highlighting other elements on page when double clicking on canvas.
+   document.getElementById('canvas').onmousedown = function(){
+      return false;
+   };
    document.getElementById('startStopButton').addEventListener('click', startGame);
    document.getElementById('randomiseButton').addEventListener('click', randomiseGame);
    document.getElementById('clearButton').addEventListener('click', clearGame);
+   document.getElementById('step').addEventListener('click', nextBoard);
    canvas = document.getElementById("canvas");
 
    initialise();
@@ -314,6 +346,11 @@ function initialise(){
    myCanvas = new drawingCanvas(canvas);
    myCanvas.drawBox();
    document.getElementById('cellSize').innerHTML = "Cell size: " + CELL_SIZE;
+
+   generations = 0;
+   document.getElementById('generations').innerHTML = "Generations: " + generations;
+   document.getElementById('speed').innerHTML = "Speed: " + speed + "ms";
+
 }
 
 function isInt(value) {
@@ -321,4 +358,4 @@ function isInt(value) {
          parseInt(Number(value)) == value &&
          !isNaN(parseInt(value, 10));
 }
-console.log = function(){}
+// console.log = function(){}

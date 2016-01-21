@@ -19,11 +19,15 @@
          <canvas id="canvas" width="800px" height="800px"></canvas>
       </div>
       <input type="button" id="startStopButton" value="Start"/>
-      <input type="range" id="runSpeed" value="30" min="5" max="500" step="1" oninput="changeSpeed(this.value)" onchange="changeSpeed(this.value)">
+      <input type="range" id="runSpeed" value="30" min="5" max="500" step="5" oninput="changeSpeed(this.value)" onchange="changeSpeed(this.value)">
       <input type="button" id="randomiseButton" value="Randomise"/>
       <input type="button" id="clearButton" value="Clear"/>
       <input type="range" id="changeCellSize" value="10" min="3" max="50" step="1" oninput="changeCellSize(this.value)" onchange="changeCellSize(this.value)">
+      <input type="button" id="step" value="Step"/>
       <div id="cellSize"></div>
+      <div id="generations"></div>
+      <div id="speed"></div>
+      <div id="mouseCoordinates"></div>
 
    </body>
 </html>
