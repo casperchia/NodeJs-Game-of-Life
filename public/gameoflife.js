@@ -88,14 +88,6 @@ function nextBoard(){
       }
    }
    myBoard = newBoard;
-   var line = "";
-   for(var x = 0; x < GRID_SIZE; x++){
-      for(var y = 0; y < GRID_SIZE; y++){
-         line = line + myBoard.grid[y][x];
-      }
-      // console.log(line);
-      line = "";
-   }
    generations++;
    myCanvas.updateCanvas();
 }
@@ -298,8 +290,8 @@ function drawingCanvas(canvas){
 
 function getColour(timeAlive, phase){
    if (phase == undefined) phase = 0;
-   center = 255 * 0.5;
-   width = 255 * 0.5;
+   center = 128;
+   width = 127;
    frequency = Math.PI*0.005;
    var i = timeAlive;
    red   = Math.sin(frequency*i+2+phase) * width + center;
